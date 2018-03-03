@@ -11,15 +11,16 @@ namespace EmailSender.Integration
 {
     public class EndToEndTests
     {
-        readonly IWebHostBuilder webHostBuilder = new WebHostBuilder().UseStartup<Startup>();
+        readonly IWebHostBuilder _webHostBuilder = new WebHostBuilder().UseStartup<Startup>();
+        readonly string _endpoint = "/Email";
 
         [Fact]
         public async Task NullPostShouldResultIn400BadRequest()
         {
-            using (var server = new TestServer(webHostBuilder))
+            using (var server = new TestServer(_webHostBuilder))
             using (var client = server.CreateClient())
             {
-                var result = await client.PostAsync("/Email", null);
+                var result = await client.PostAsync(_endpoint, null);
                 Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
             }
         }
@@ -27,12 +28,12 @@ namespace EmailSender.Integration
         [Fact]
         public async Task InvalidPostShouldResultIn400BadRequest()
         {
-            var content = new FormUrlEncodedContent(new Dictionary<string, string> { { "Body", string.Empty } });
+            var content = new FormUrlEncodedContent(CreateEmailFormdata(string.Empty));
 
-            using (var server = new TestServer(webHostBuilder))
+            using (var server = new TestServer(_webHostBuilder))
             using (var client = server.CreateClient())
             {
-                var result = await client.PostAsync("/Email", content);
+                var result = await client.PostAsync(_endpoint, content);
                 Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
             }
         }
@@ -40,14 +41,16 @@ namespace EmailSender.Integration
         [Fact]
         public async Task ValidPostShouldResultIn204NoContent()
         {
-            var content = new FormUrlEncodedContent(new Dictionary<string, string> { { "Body", "Testing..." } });
+            var content = new FormUrlEncodedContent(CreateEmailFormdata("Testing..."));
 
-            using (var server = new TestServer(webHostBuilder))
+            using (var server = new TestServer(_webHostBuilder))
             using (var client = server.CreateClient())
             {
-                var result = await client.PostAsync("/Email", content);
+                var result = await client.PostAsync(_endpoint, content);
                 Assert.Equal(HttpStatusCode.NoContent, result.StatusCode);
             }
         }
+
+        Dictionary<string, string> CreateEmailFormdata(string body) => new Dictionary<string, string> { { "Body", body } };
     }
 }

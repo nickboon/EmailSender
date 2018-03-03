@@ -21,7 +21,7 @@ namespace DotNetCoreSampleApi.Tests
         {
             var controller = new EmailController();
 
-            var result = controller.Post(new EmailModel() { Body = "Testing..."});
+            var result = controller.Post(new EmailModel("Testing..."));
 
             Assert.IsType<NoContentResult>(result);
         }
@@ -31,10 +31,9 @@ namespace DotNetCoreSampleApi.Tests
         {
             var controller = new EmailController();
 
-            var result = controller.Post(new EmailModel() { Body = null});
+            var result = controller.Post(new EmailModel(null));
 
             Assert.IsType<BadRequestResult>(result);
         }
-
     }
 }
