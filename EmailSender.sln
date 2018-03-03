@@ -4,7 +4,7 @@ VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EmailSender", "EmailSender\EmailSender.csproj", "{C686768C-6F36-4E04-B906-103FDEAF387F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EmailSender.TEsts", "EmailSender.Tests\EmailSender.TEsts.csproj", "{82210A3E-2318-4213-A4F5-7E0474680858}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EmailSender.Tests", "EmailSender.Tests\EmailSender.Tests.csproj", "{82210A3E-2318-4213-A4F5-7E0474680858}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EmailSender.Integration", "EmailSender.Integration\EmailSender.Integration.csproj", "{6879D491-DF2A-4F17-89B0-10C00F3F0364}"
 EndProject
