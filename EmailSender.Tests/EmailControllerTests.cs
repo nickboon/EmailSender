@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using Xunit;
 
-namespace DotNetCoreSampleApi.Tests
+namespace EmailSender.Tests
 {
     public class EmailControlerTests
     {
@@ -21,7 +21,7 @@ namespace DotNetCoreSampleApi.Tests
         {
             var controller = new EmailController();
 
-            var result = controller.Post(new EmailModel("Testing..."));
+            var result = controller.Post(NewEmail("Testing..."));
 
             Assert.IsType<NoContentResult>(result);
         }
@@ -31,9 +31,11 @@ namespace DotNetCoreSampleApi.Tests
         {
             var controller = new EmailController();
 
-            var result = controller.Post(new EmailModel(null));
+            var result = controller.Post(NewEmail(null));
 
             Assert.IsType<BadRequestResult>(result);
         }
+
+        EmailModel NewEmail(string body) => new EmailModel { Body = body };
     }
 }

@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.Hosting;
+﻿using AutoFixture.Xunit2;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Xunit;
-
 
 namespace EmailSender.Integration
 {
@@ -28,29 +29,41 @@ namespace EmailSender.Integration
         [Fact]
         public async Task InvalidPostShouldResultIn400BadRequest()
         {
-            var content = new FormUrlEncodedContent(CreateEmailFormdata(string.Empty));
+            var content = new FormUrlEncodedContent(NewEmailFormdata(string.Empty));
 
-            using (var server = new TestServer(_webHostBuilder))
-            using (var client = server.CreateClient())
-            {
-                var result = await client.PostAsync(_endpoint, content);
-                Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
-            }
+            var result = await SendEmail(content);
+
+            Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
         }
 
-        [Fact]
-        public async Task ValidPostShouldResultIn204NoContent()
+        [Theory, AutoData]
+        public async Task ValidPostShouldResultInAnEmailDelivery(string anonymousMessage)
         {
-            var content = new FormUrlEncodedContent(CreateEmailFormdata("Testing..."));
+            var content = new FormUrlEncodedContent(NewEmailFormdata(anonymousMessage));
 
-            using (var server = new TestServer(_webHostBuilder))
-            using (var client = server.CreateClient())
-            {
-                var result = await client.PostAsync(_endpoint, content);
-                Assert.Equal(HttpStatusCode.NoContent, result.StatusCode);
-            }
+            var result = await SendEmail(content);
+
+            Assert.Equal(HttpStatusCode.NoContent, result.StatusCode);
+
+            var emails = NewEmailService().SearchInboxByBody(anonymousMessage);
+
+            Assert.NotEmpty(emails); // need to retry this
         }
 
-        Dictionary<string, string> CreateEmailFormdata(string body) => new Dictionary<string, string> { { "Body", body } };
+        async Task<HttpResponseMessage> SendEmail(FormUrlEncodedContent content)
+        {
+            using (var server = new TestServer(_webHostBuilder))
+            using (var client = server.CreateClient())
+                return await client.PostAsync(_endpoint, content);
+        }
+
+        IEmailService NewEmailService() => new EmailService(
+            new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json")
+                .Build()
+                .GetSection("EmailConfiguration")
+                .Get<EmailConfiguration>());
+
+        Dictionary<string, string> NewEmailFormdata(string body) => new Dictionary<string, string> { { "Body", body } };
     }
 }
