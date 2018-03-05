@@ -45,9 +45,11 @@ namespace EmailSender.Integration
 
             Assert.Equal(HttpStatusCode.NoContent, result.StatusCode);
 
-            var emails = NewEmailService().SearchInboxByBody(anonymousMessage);
+            Retry.WithExponentialBackOff(() => {
+                var emails = NewEmailService().SearchInboxByBody(anonymousMessage);
 
-            Assert.NotEmpty(emails); // need to retry this
+                Assert.NotEmpty(emails);
+            }, 10000); // adjust backoff when test passes
         }
 
         async Task<HttpResponseMessage> SendEmail(FormUrlEncodedContent content)
