@@ -6,11 +6,20 @@ namespace EmailSender.Controllers
     [Route("/[controller]")]
     public class EmailController : Controller
     {
+        private readonly IEmailService _emailService;
+
+        public EmailController(IEmailService emailService)
+        {
+            _emailService = emailService;
+        }
+
         [HttpPost]
         public IActionResult Post(EmailModel email)
         {
             if (!IsValid(email))
                 return BadRequest();
+
+            _emailService.Send(email);
 
             return NoContent();
         }

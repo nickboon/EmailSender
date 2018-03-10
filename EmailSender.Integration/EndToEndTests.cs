@@ -36,7 +36,7 @@ namespace EmailSender.Integration
             Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
         }
 
-        [Theory, AutoData]
+        [Theory, AutoData(Skip = "Not implemented")]
         public async Task ValidPostShouldResultInAnEmailDelivery(string anonymousMessage)
         {
             var content = new FormUrlEncodedContent(NewEmailFormdata(anonymousMessage));

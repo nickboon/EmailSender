@@ -1,6 +1,10 @@
+using AutoFixture;
+using AutoFixture.AutoMoq;
+using AutoFixture.Xunit2;
 using EmailSender.Controllers;
 using EmailSender.Models;
 using Microsoft.AspNetCore.Mvc;
+using Moq;
 using System;
 using Xunit;
 
@@ -8,34 +12,46 @@ namespace EmailSender.Tests
 {
     public class EmailControlerTests
     {
-        [Fact]
-        public void Post_ShouldThrow_NullReferenceExceptionIfNoEmail()
+        [Theory, AutoConfiguredMoqData]
+        public void Post_ShouldThrow_NullReferenceExceptionIfNoEmail(EmailController sut)
         {
-            var controller = new EmailController();
-
-            Assert.Throws<NullReferenceException>(() => controller.Post(null));
+            Assert.Throws<NullReferenceException>(() => sut.Post(null));
         }
 
-        [Fact]
-        public void Post_ShouldReturn_204NoContentIfEmailValid()
+        [Theory, AutoConfiguredMoqData]
+        public void Post_ShouldReturn_204NoContentIfEmailValid(EmailController sut)
         {
-            var controller = new EmailController();
-
-            var result = controller.Post(NewEmail("Testing..."));
+            var result = sut.Post(NewEmail("Testing..."));
 
             Assert.IsType<NoContentResult>(result);
         }
 
-        [Fact]
-        public void Post_ShouldReturn_400BadRequestIfEmailInvalid()
+        [Theory, AutoConfiguredMoqData]
+        public void Post_ShouldCall_SendIfEmailValid(
+            [Frozen] Mock<IEmailService> emailService,
+            EmailController sut)
         {
-            var controller = new EmailController();
+            sut.Post(NewEmail("Testing..."));
 
-            var result = controller.Post(NewEmail(null));
+            emailService.Verify(x => x.Send(It.IsAny<EmailModel>()), Times.Once);
+        }
+
+        [Theory, AutoConfiguredMoqData]
+        public void Post_ShouldReturn_400BadRequestIfEmailInvalid(EmailController sut)
+        {
+            var result = sut.Post(NewEmail(null));
 
             Assert.IsType<BadRequestResult>(result);
         }
 
         EmailModel NewEmail(string body) => new EmailModel { Body = body };
+
+        class AutoConfiguredMoqDataAttribute : AutoDataAttribute
+        {
+            public AutoConfiguredMoqDataAttribute()
+                : base(() => new Fixture().Customize(new AutoConfiguredMoqCustomization()))
+            {
+            }
+        }
     }
 }
