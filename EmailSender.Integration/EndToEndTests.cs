@@ -12,9 +12,11 @@ namespace EmailSender.Integration
 {
     public class EndToEndTests
     {
-        readonly IWebHostBuilder _webHostBuilder = new WebHostBuilder().UseStartup<Startup>();
         readonly string _endpoint = "/Email";
-
+        readonly IWebHostBuilder _webHostBuilder = new WebHostBuilder()
+            .ConfigureAppConfiguration((hostingContext, config) =>config.AddJsonFile("appsettings.json"))
+            .UseStartup<Startup>();
+ 
         [Fact]
         public async Task NullPostShouldResultIn400BadRequest()
         {
@@ -36,7 +38,7 @@ namespace EmailSender.Integration
             Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
         }
 
-        [Theory, AutoData(Skip = "Not implemented")]
+        [Theory, AutoData]
         public async Task ValidPostShouldResultInAnEmailDelivery(string anonymousMessage)
         {
             var content = new FormUrlEncodedContent(NewEmailFormdata(anonymousMessage));
@@ -45,11 +47,14 @@ namespace EmailSender.Integration
 
             Assert.Equal(HttpStatusCode.NoContent, result.StatusCode);
 
+            var emailService = NewEmailService();
             Retry.WithExponentialBackOff(() => {
-                var emails = NewEmailService().SearchInboxByBody(anonymousMessage);
+                var emails = emailService.SearchInboxByBody(anonymousMessage);
 
                 Assert.NotEmpty(emails);
-            }, 10000); // adjust backoff when test passes
+            }, 1000);
+
+            emailService.MarkTestMessageForDeletionByBody(anonymousMessage);
         }
 
         async Task<HttpResponseMessage> SendEmail(FormUrlEncodedContent content)
@@ -59,13 +64,13 @@ namespace EmailSender.Integration
                 return await client.PostAsync(_endpoint, content);
         }
 
-        IEmailService NewEmailService() => new EmailService(
+        IIntegrationEmailService NewEmailService() => new IntegrationEmailService(
             new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json")
                 .Build()
-                .GetSection("EmailConfiguration")
-                .Get<EmailConfiguration>());
+                .GetSection("IntegrationEmailConfiguration")
+                .Get<IntegrationEmailConfiguration>());
 
-        Dictionary<string, string> NewEmailFormdata(string body) => new Dictionary<string, string> { { "Body", body } };
+        Dictionary<string, string> NewEmailFormdata(string body) => new Dictionary<string, string> { { "Body", body }, { "From", "Annonymous@email.address" } };
     }
 }

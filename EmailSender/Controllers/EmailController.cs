@@ -14,7 +14,7 @@ namespace EmailSender.Controllers
         }
 
         [HttpPost]
-        public IActionResult Post(EmailModel email)
+        public IActionResult Post( EmailModel email)
         {
             if (!IsValid(email))
                 return BadRequest();
@@ -26,6 +26,9 @@ namespace EmailSender.Controllers
 
         bool IsValid(EmailModel email)
         {
+            if (string.IsNullOrWhiteSpace(email.From))
+                return false;
+
             return !string.IsNullOrWhiteSpace(email.Body);
         }
     }

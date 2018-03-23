@@ -1,5 +1,3 @@
-using AutoFixture;
-using AutoFixture.AutoMoq;
 using AutoFixture.Xunit2;
 using EmailSender.Controllers;
 using EmailSender.Models;
@@ -19,9 +17,9 @@ namespace EmailSender.Tests
         }
 
         [Theory, AutoConfiguredMoqData]
-        public void Post_ShouldReturn_204NoContentIfEmailValid(EmailController sut)
+        public void Post_ShouldReturn_204NoContentIfEmailValid(EmailController sut, EmailModel email)
         {
-            var result = sut.Post(NewEmail("Testing..."));
+            var result = sut.Post(email);
 
             Assert.IsType<NoContentResult>(result);
         }
@@ -29,9 +27,10 @@ namespace EmailSender.Tests
         [Theory, AutoConfiguredMoqData]
         public void Post_ShouldCall_SendIfEmailValid(
             [Frozen] Mock<IEmailService> emailService,
-            EmailController sut)
+            EmailController sut,
+            EmailModel email)
         {
-            sut.Post(NewEmail("Testing..."));
+            sut.Post(email);
 
             emailService.Verify(x => x.Send(It.IsAny<EmailModel>()), Times.Once);
         }
@@ -45,13 +44,5 @@ namespace EmailSender.Tests
         }
 
         EmailModel NewEmail(string body) => new EmailModel { Body = body };
-
-        class AutoConfiguredMoqDataAttribute : AutoDataAttribute
-        {
-            public AutoConfiguredMoqDataAttribute()
-                : base(() => new Fixture().Customize(new AutoConfiguredMoqCustomization()))
-            {
-            }
-        }
     }
 }

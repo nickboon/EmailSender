@@ -10,20 +10,20 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace EmailSender.Integration
 {
-    public interface IEmailService
+    public interface IIntegrationEmailService
     {
         List<EmailModel> SearchInboxByBody(string searchstring);
+
+        void MarkTestMessageForDeletionByBody(string searchstring);
     }
 
-    public class EmailService : IEmailService
+    public class IntegrationEmailService : IIntegrationEmailService
     {
-        private readonly IEmailConfiguration _emailConfiguration;
+        private readonly IIntegrationEmailConfiguration _emailConfiguration;
 
-        public EmailService(IEmailConfiguration emailConfiguration)
-        {
-            _emailConfiguration = emailConfiguration;
-        }
-
+        public IntegrationEmailService(IIntegrationEmailConfiguration emailConfiguration) =>
+             _emailConfiguration = emailConfiguration;
+ 
         public List<EmailModel> SearchInboxByBody(string searchstring)
         {
             using (var client = new ImapClient())
@@ -33,9 +33,29 @@ namespace EmailSender.Integration
                 var inbox = client.Inbox;
                 inbox.Open(FolderAccess.ReadOnly);
 
-                return inbox.Search(SearchQuery.BodyContains(searchstring))
+                var emails = inbox.Search(SearchQuery.BodyContains(searchstring))
                      .Select(x => new EmailModel { Body = inbox.GetMessage(x).GetTextBody(TextFormat.Text) })
                      .ToList();
+
+                client.Disconnect(true);
+
+                return emails;
+            }
+        }
+
+        public void MarkTestMessageForDeletionByBody(string searchstring)
+        {
+            using (var client = new ImapClient())
+            {
+                TryConnect(client);
+
+                var inbox = client.Inbox;
+                inbox.Open(FolderAccess.ReadWrite);
+
+                var uids = inbox.Search(SearchQuery.BodyContains(searchstring));
+                inbox.AddFlags(uids, MessageFlags.Deleted, false);
+
+                client.Disconnect(true);
             }
         }
 
